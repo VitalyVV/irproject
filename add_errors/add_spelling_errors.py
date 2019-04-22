@@ -8,37 +8,36 @@ alphabet_list = list(string.ascii_lowercase)
 alphabet_list.append(' ')
 
 
-def readTag(fn):
-    TARGET_TAG_SET = ["V", "N", "A"]
-    f = open(fn, "r")
-    lines = f.readlines()
-    selected_inds = []
-    selected_words = []
-    tok_sent = []
-    for line in lines:
-        try:
-            sent, tag, score, orig_sent = line.strip().split("\t")
-        except Exception:
-            continue
-        tag_seq = tag.split()
-        sent_seq = sent.split()
-        inds = [
-            ind for ind in range(len(tag_seq))
-            if tag_seq[ind] in TARGET_TAG_SET]
-        selected_inds.append(inds[:])
-        words = [sent_seq[ind] for ind in inds]
-        selected_words.append(words[:])
-        tok_sent.append(sent)
-        # if (len(selected_words) >= 2):
-        #    break
+def readTag(filename):
+    TARGET_TAG_SET = ['V', 'N', 'A']
+    with open(filename, 'r') as input_file:
+        selected_inds = list()
+        selected_words = list()
+        tok_sent = list()
+        for line in input_file:
+            try:
+                sent, tag, score, orig_sent = line.strip().split('\t')
+            except Exception:
+                continue
+
+            tag_seq = tag.split()
+            sent_seq = sent.split()
+            inds = [
+                ind for ind in range(len(tag_seq))
+                if tag_seq[ind] in TARGET_TAG_SET]
+            words = [sent_seq[ind] for ind in inds]
+
+            selected_inds.append(inds)
+            selected_words.append(words)
+            tok_sent.append(sent)
+
     return selected_inds, selected_words, tok_sent
 
 
-def load_toxic_word(fn):
+def load_toxic_word(filename):
     """Load a list of (toxic_score, sentence, most_toxic_word)"""
-    with open(fn, "rb") as handle:
-        Sentence_And_Toxic_Word = pickle.load(handle)
-    return Sentence_And_Toxic_Word
+    with open(filename, "rb") as handle:
+        return pickle.load(handle)
 
 
 def add_character(word, char=None):
