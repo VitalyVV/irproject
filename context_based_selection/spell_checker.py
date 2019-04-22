@@ -3,16 +3,16 @@ spell checker
 """
 import argparse
 import codecs
-from context_based_selection.context_score import scoreWord
 import os
 import difflib
 from nltk.corpus import words
+import numpy as np
+import editdistance
+from context_based_selection.context_score import scoreWord
 from context_based_selection.vocab import Vocab
 from context_based_selection.context_score import cosSim
-import numpy as np
 from domain_corpus_generation.corpus_util import loadDict
 from preprocess.regular_check import rawCheck, rawCheckOnDist
-import editdistance
 from pyxdameraulevenshtein import damerau_levenshtein_distance as dist
 
 
@@ -43,7 +43,7 @@ def getCandFromDict(word):
     cur_dist = 0
 
     while (cand_words == [] and cur_dist <=3):
-	cur_dist += 1
+        cur_dist += 1
         for key in small_corpus: # smaller corpus
             ##  levenshtein_distance: transposition = 2
             ##        if (editdistance.eval(key, word) <= DIST_LIMIT):
@@ -56,15 +56,15 @@ def getCandFromDict(word):
 	
     # filter words with low frequency
     if (freq_list != [] and max(freq_list)>0):
-	cand_words = [cand_words[ind] for ind in range(len(freq_list)) if freq_list[ind] > 0]	
-	freq_list = [freq for freq in freq_list if freq > 0]
+        cand_words = [cand_words[ind] for ind in range(len(freq_list)) if freq_list[ind] > 0]
+        freq_list = [freq for freq in freq_list if freq > 0]
         # sort words by frequency
         sort_inds = np.argsort(freq_list)[::-1]
         sort_words = [cand_words[ind] for ind in sort_inds]
         sort_freq = [freq_list[ind] for ind in sort_inds]
     else:
-	sort_words = cand_words[:]
-	sort_freq = [0] * len(cand_words)
+        sort_words = cand_words[:]
+        sort_freq = [0] * len(cand_words)
     #print "cand_words", cand_words
     return sort_words, sort_freq
 
@@ -123,7 +123,7 @@ def outputCorrectionSent(sent_seq, context_size):
     for ind in range(word_num):
         word = sent_seq[ind]
         if (len(word) > 30):
-	    continue
+            continue
         # ignore digits
         num_flag = False
         for digit in NUMS:
@@ -161,7 +161,7 @@ def outputCorrectionSent(sent_seq, context_size):
             if (len(sorted_cand_words) > 0):
                 revised_sent_seq[ind]  = sorted_cand_words[0]
                 corr.append((sorted_cand_words[0], word))
-		cand_corr.append(",".join(sorted_cand_words)+" -> "+word)
+                cand_corr.append(",".join(sorted_cand_words)+" -> "+word)
     return revised_sent_seq, corr, cand_corr
 
 
@@ -170,7 +170,7 @@ def generateTrueCandCorrection(orig_sent_list, error_sent_list, correction_list)
     for ind in range(len(orig_sent_list)):
         orig_sent_seq = orig_sent_list[ind].strip().split()
         error_sent_seq = error_sent_list[ind].strip().split()
-	correct_word = correction_list[ind]
+        correct_word = correction_list[ind]
         wrong_word = ""
         for word in error_sent_seq:
             if (word not in orig_sent_seq and dist(word, correct_word)<=1):
@@ -201,7 +201,8 @@ def generateAlgoCandCorrection(sent_str_list, context_size=4):
         revised_sent_seq, corr, cand_corr = outputCorrectionSent(sent_seq, context_size)
         revised_sent_token.append(revised_sent_seq[:])
         revised_corrections.append(corrections[sent_ind][:]+corr[:])
-	cand_corrections.append(cand_corr[:])
+        cand_corrections.append(cand_corr[:])
+
     return revised_sent_token, revised_corrections, cand_corrections
     
 
@@ -216,8 +217,8 @@ def readInputSent(error_type):
     error_sent_list = []
     correction_list = []
     for fn in os.listdir(path):
-    if (not fn.endswith(".txt")):
-        continue
+        if (not fn.endswith(".txt")):
+            continue
         f = open(path+fn, "r")
         lines = f.readlines()
         while (len(lines) >= 6):
@@ -232,17 +233,18 @@ def readInputSent(error_type):
             # revised score
             revised_score = float(lines.pop(0))
             # corrections
-	    correction_str = lines.pop(0).strip()
-        #print "cor_str", correction_str
+            correction_str = lines.pop(0).strip()
+            #print "cor_str", correction_str
             seq = correction_str.split(";")
-        #print "seq", seq
-        seq = [s.strip() for s in seq]
-        #print (s.split(",")[0].strip(), s.split(",")[1].strip())
+            # print "seq", seq
+            seq = [s.strip() for s in seq]
+
             corrections = [(s.split(",")[0].strip(), s.split(",")[1].strip()) for s in seq if s!=""]
             correction_list.append(corrections[:])
-            # empty line
+
             lines.pop(0)
         f.close()
+
     return orig_sent_list, error_sent_list, correction_list
 
 

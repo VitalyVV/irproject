@@ -17,13 +17,16 @@ import numpy as np
 import sys
 import array
 import numpy.random as rn
-import pickle as pickle
+import pickle
 import itertools
 import os
 import logging
 import time
 import struct
+
+
 FUNCWORD = 'funcWords.txt'
+
 
 class Vocab:
 
@@ -37,7 +40,6 @@ class Vocab:
 		self.readVectorFromFile()
 		self.readFuncWords(isFunctional)
 
-                #self.sem = multiprocessing.BoundedSemaphore(3)
 
 
 	def readVocabFromFile(self):
@@ -64,8 +66,8 @@ class Vocab:
 
 		print("Done loading vocabulary.", file=sys.stdout)
 
-	def readVectorFromFile(self):
 
+	def readVectorFromFile(self):
 		vecDim = self.vecDim
 		vecMatrix = array.array('f')
 		vecMatrix.fromfile(open(self.vecFile, 'rb'), self.vocabSize * vecDim)
@@ -78,73 +80,69 @@ class Vocab:
 		#print vecMatrix[:2]
 		print("Done loading vectors.", file=sys.stdout)
 
-        def readFuncWords(self, isFunctional):
-                funcWords = set()
-                if isFunctional:
-                    f = open(FUNCWORD, 'r')
-                    for line in f.readlines():
-                        funcWords.add(line.rstrip())
 
-                self.funcWords = funcWords
+	def readFuncWords(self, isFunctional):
+		funcWords = set()
+		if isFunctional:
+			f = open(FUNCWORD, 'r')
+			for line in f.readlines():
+				funcWords.add(line.rstrip())
+
+		self.funcWords = funcWords
+
 
 	def getWordIdList(self, word_list):
-                                """
-                                return a list of indices of word_list
-                                """
-                                wordId = []
-                                for word in word_list:
-                                        if (word in self.funcWords):
-                                                continue
-                                        try:
-                                                wordId.append(self.vocabIndex[word])
-                                        except:
-                                                pass
-                                return wordId
-                                        
+		"""
+		return a list of indices of word_list
+		"""
+		wordId = []
+		for word in word_list:
+				if (word in self.funcWords):
+						continue
+				try:
+						wordId.append(self.vocabIndex[word])
+				except:
+						pass
+		return wordId
+
 
 	def getContextIdList(self, contexts):
 		contextList = []
 		for context in contexts:
-                    contextId = []
-                    context = context.lower().rstrip().split()
-                    for word in context:
-                        if word in self.funcWords:
-                            continue
-                        try:
-                            contextId.append(self.vocabIndex[word])
-                        except:
-                            pass
-                    contextList.append(contextId[:])
-		#print "contextList:", contextList[0]
-                return contextList
+			contextId = []
+			context = context.lower().rstrip().split()
+			for word in context:
+				if word in self.funcWords:
+					continue
+				try:
+					contextId.append(self.vocabIndex[word])
+				except:
+					pass
+			contextList.append(contextId[:])
+			#print "contextList:", contextList[0]
+		return contextList
 
-                                        
+
 	def getVecFromId(self, contextIdx):
 		contextVecs = list()
 		for idx in contextIdx:
-		    if (idx == []):
-			vecs = np.array([[0]*self.vecDim])
-		    else:
-			vecs = self.vecMatrix[np.array(idx)]
-		    contextVecs.append(vecs)
-		return contextVecs		
+			if (idx == []):
+				vecs = np.array([[0]*self.vecDim])
+			else:
+				vecs = self.vecMatrix[np.array(idx)]
+			contextVecs.append(vecs)
+		return contextVecs
+
 
 	def getVectors(self, word_list):
-		#vecDim = self.vecDim
 		idxList = self.getWordIdList(word_list)
-
-		#print "debugging", "idxList:", idxList
 		vecList = []
 		for i in range(len(idxList)):
-		    idx = idxList[i]
-		    if (idx == []):
-			vecs = np.array([[0]*self.vecDim])
-			print("no embedding for word",word_list)
-		    else:
-                        vecs = self.vecMatrix[np.array(idx)]
-                    vecList.append(vecs)
-
-		#print "debugging", "vecList:", vecList
-                return vecList
-                                    
-                        
+			idx = idxList[i]
+			if (idx == []):
+				vecs = np.array([[0]*self.vecDim])
+				print("no embedding for word",word_list)
+			else:
+				vecs = self.vecMatrix[np.array(idx)]
+				vecList.append(vecs)
+		return vecList
