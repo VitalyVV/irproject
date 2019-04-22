@@ -6,8 +6,6 @@ from collections import Counter
 import pickle
 from twokenize import tokenize
 
-# TODO: Add logging instead of prints
-
 
 def readWikiVocab(fn="vocab.txt"):
     with open(fn, 'r') as input_file:

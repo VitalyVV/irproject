@@ -140,8 +140,6 @@ emoticon = regex_or(
         # http://en.wikipedia.org/wiki/User:Scapler/emoticons#East_Asian_style
         eastEmote.replace('2', '1', 1), basicface,
         # iOS 'emoji' characters (some smileys, some symbols) [\ue001-\uebbb]
-        # TODO should try a big precompiled lexicon from Wikipedia,
-        #   Dan Ramage told me (BTO) he does this
         oOEmote
 )
 

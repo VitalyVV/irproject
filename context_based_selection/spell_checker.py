@@ -8,17 +8,17 @@ import difflib
 from nltk.corpus import words
 import numpy as np
 import editdistance
-from context_based_selection.context_score import scoreWord
-from context_based_selection.vocab import Vocab
-from context_based_selection.context_score import cosSim
+
+from context_score import cosSim
+from vocab import Vocab
 from domain_corpus_generation.corpus_util import loadDict
 from preprocess.regular_check import rawCheck, rawCheckOnDist
 from pyxdameraulevenshtein import damerau_levenshtein_distance as dist
 
 
-corpus = loadDict(fn="domain_corpus_generation/dict_v1.pickle", freq_threshold=100)
+corpus = loadDict()
 small_corpus = corpus
-train_corpus = loadDict(fn="domain_corpus_generation/persective_train_dict.pickle", freq_threshold=5)
+train_corpus = corpus
 
 
 vecDim = 300
@@ -185,7 +185,7 @@ def generateAlgoCandCorrection(sent_str_list, context_size=4):
     """
     input: sent_str_list - a list of strings
     output: revised_sent_seq - a list of a list of tokens
-                revised_corrections - a list of a list of tuples
+            revised_corrections - a list of a list of tuples
     """
     revised_sent_token = []
     revised_corrections = []
@@ -212,7 +212,7 @@ def readInputSent(error_type):
     read file with added errors: origin sent, score, error sent, score, corrected word
     return a list of strings
     """
-    path = "perspective_evaluation/revise_and_test/output/separated_by_revised_type/"+error_type+"/"
+    path = ""
     orig_sent_list = []
     error_sent_list = []
     correction_list = []
@@ -227,16 +227,16 @@ def readInputSent(error_type):
             orig_sent_list.append(orig_sent)
             # original score
             orig_score = float(lines.pop(0))
+
             # revised sent
             error_sent = lines.pop(0)
             error_sent_list.append(error_sent)
             # revised score
             revised_score = float(lines.pop(0))
+
             # corrections
             correction_str = lines.pop(0).strip()
-            #print "cor_str", correction_str
             seq = correction_str.split(";")
-            # print "seq", seq
             seq = [s.strip() for s in seq]
 
             corrections = [(s.split(",")[0].strip(), s.split(",")[1].strip()) for s in seq if s!=""]
@@ -255,7 +255,7 @@ def evalCorrections(gold_corrections, algo_corrections, cand_corrections, error_
     total_gold_corrections = 0
     total_algo_corrections = 0
     correct_algo_corrections = 0
-#    logs = open("logs_"+error_type+".txt", "a+")
+
     for ind in range(len(gold_corrections)):
         gold_list = gold_corrections[ind]
         algo_list = algo_corrections[ind]
