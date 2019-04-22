@@ -1,43 +1,46 @@
-# -*- coding: utf-8 -*-
-
-
-
 import operator
 import re
 import html.parser
 
+
 def regex_or(*items):
     return '(?:' + '|'.join(items) + ')'
 
-Contractions = re.compile("(?i)(\w+)(n['’′]t|['’′]ve|['’′]ll|['’′]d|['’′]re|['’′]s|['’′]m)$", re.UNICODE)
-Whitespace = re.compile("[\s\u0020\u00a0\u1680\u180e\u202f\u205f\u3000\u2000-\u200a]+", re.UNICODE)
+
+Contractions = re.compile(
+    r"(?i)(\w+)(n['’′]t|['’′]ve|['’′]ll|['’′]d|['’′]re|['’′]s|['’′]m)$",
+    re.UNICODE)
+Whitespace = re.compile(
+    '[\\s\u0020\u00a0\u1680\u180e\u202f\u205f\u3000\u2000-\u200a]+', re.UNICODE)
 
 punctChars = r"['\"“”‘’.?!…,:;]"
-#punctSeq   = punctChars+"+"	#'anthem'. => ' anthem '.
-punctSeq   = r"['\"“”‘’]+|[.?!,…]+|[:;]+"	#'anthem'. => ' anthem ' .
-entity     = r"&(?:amp|lt|gt|quot);"
+# punctSeq   = punctChars+"+"	#'anthem'. => ' anthem '.
+punctSeq = r"['\"“”‘’]+|[.?!,…]+|[:;]+"	 # 'anthem'. => ' anthem ' .
+entity = r"&(?:amp|lt|gt|quot);"
 #  URLs
 
 
-# BTO 2012-06: everyone thinks the daringfireball regex should be better, but they're wrong.
+# BTO 2012-06: everyone thinks the daringfireball regex should be better,
+# but they're wrong.
 # If you actually empirically test it the results are bad.
 # Please see https://github.com/brendano/ark-tweet-nlp/pull/9
 
-urlStart1  = r"(?:https?://|\bwww\.)"
-commonTLDs = r"(?:com|org|edu|gov|net|mil|aero|asia|biz|cat|coop|info|int|jobs|mobi|museum|name|pro|tel|travel|xxx)"
-ccTLDs	 = r"(?:ac|ad|ae|af|ag|ai|al|am|an|ao|aq|ar|as|at|au|aw|ax|az|ba|bb|bd|be|bf|bg|bh|bi|bj|bm|bn|bo|br|bs|bt|" + \
+urlStart1 = r'(?:https?://|\bwww\.)'
+commonTLDs = (r'(?:com|org|edu|gov|net|mil|aero|asia|biz|cat|coop|info'
+              r'|int|jobs|mobi|museum|name|pro|tel|travel|xxx)')
+ccTLDs = r"(?:ac|ad|ae|af|ag|ai|al|am|an|ao|aq|ar|as|at|au|aw|ax|az|ba|bb|bd|be|bf|bg|bh|bi|bj|bm|bn|bo|br|bs|bt|" + \
 r"bv|bw|by|bz|ca|cc|cd|cf|cg|ch|ci|ck|cl|cm|cn|co|cr|cs|cu|cv|cx|cy|cz|dd|de|dj|dk|dm|do|dz|ec|ee|eg|eh|" + \
 r"er|es|et|eu|fi|fj|fk|fm|fo|fr|ga|gb|gd|ge|gf|gg|gh|gi|gl|gm|gn|gp|gq|gr|gs|gt|gu|gw|gy|hk|hm|hn|hr|ht|" + \
 r"hu|id|ie|il|im|in|io|iq|ir|is|it|je|jm|jo|jp|ke|kg|kh|ki|km|kn|kp|kr|kw|ky|kz|la|lb|lc|li|lk|lr|ls|lt|" + \
 r"lu|lv|ly|ma|mc|md|me|mg|mh|mk|ml|mm|mn|mo|mp|mq|mr|ms|mt|mu|mv|mw|mx|my|mz|na|nc|ne|nf|ng|ni|nl|no|np|" + \
 r"nr|nu|nz|om|pa|pe|pf|pg|ph|pk|pl|pm|pn|pr|ps|pt|pw|py|qa|re|ro|rs|ru|rw|sa|sb|sc|sd|se|sg|sh|si|sj|sk|" + \
 r"sl|sm|sn|so|sr|ss|st|su|sv|sy|sz|tc|td|tf|tg|th|tj|tk|tl|tm|tn|to|tp|tr|tt|tv|tw|tz|ua|ug|uk|us|uy|uz|" + \
-r"va|vc|ve|vg|vi|vn|vu|wf|ws|ye|yt|za|zm|zw)"	#TODO: remove obscure country domains?
-urlStart2  = r"\b(?:[A-Za-z\d-])+(?:\.[A-Za-z0-9]+){0,3}\." + regex_or(commonTLDs, ccTLDs) + r"(?:\."+ccTLDs+r")?(?=\W|$)"
-urlBody    = r"(?:[^\.\s<>][^\s<>]*?)?"
+r"va|vc|ve|vg|vi|vn|vu|wf|ws|ye|yt|za|zm|zw)"  # TODO: remove obscure country domains?
+urlStart2 = r"\b(?:[A-Za-z\d-])+(?:\.[A-Za-z0-9]+){0,3}\." + regex_or(commonTLDs, ccTLDs) + r"(?:\."+ccTLDs+r")?(?=\W|$)"
+urlBody = r"(?:[^\.\s<>][^\s<>]*?)?"
 urlExtraCrapBeforeEnd = regex_or(punctChars, entity) + "+?"
-urlEnd     = r"(?:\.\.+|[<>]|\s|$)"
-url        = regex_or(urlStart1, urlStart2) + urlBody + "(?=(?:"+urlExtraCrapBeforeEnd+")?"+urlEnd+")"
+urlEnd = r"(?:\.\.+|[<>]|\s|$)"
+url = regex_or(urlStart1, urlStart2) + urlBody + "(?=(?:"+urlExtraCrapBeforeEnd+")?"+urlEnd+")"
 
 
 # Numeric
@@ -102,7 +105,7 @@ emoticon = regex_or(
 
         #inspired by http://en.wikipedia.org/wiki/User:Scapler/emoticons#East_Asian_style
         eastEmote.replace("2", "1", 1), basicface,
-        # iOS 'emoji' characters (some smileys, some symbols) [\ue001-\uebbb]  
+        # iOS 'emoji' characters (some smileys, some symbols) [\ue001-\uebbb]
         # TODO should try a big precompiled lexicon from Wikipedia, Dan Ramage told me (BTO) he does this
 
         # myleott: o.O and O.o are two of the biggest sources of differences
@@ -119,7 +122,7 @@ Arrows = regex_or(r"(?:<*[-―—=]*>+|<+[-―—=]*>*)", "[\u2190-\u21ff]+".enc
 # "hello (#hashtag)" ==> "hello ( #hashtag )"  RIGHT
 # "hello (@person)" ==> "hello (@person )"  WRONG
 # "hello (@person)" ==> "hello ( @person )"  RIGHT
-# ... Some sort of weird interaction with edgepunct I guess, because edgepunct 
+# ... Some sort of weird interaction with edgepunct I guess, because edgepunct
 # has poor content-symbol detection.
 
 # This also gets #1 #40 which probably aren't hashtags .. but good as tokens.
@@ -153,7 +156,7 @@ Protected  = re.compile(
         separators,
         decorations,
         embeddedApostrophe,
-        Hashtag,  
+        Hashtag,
         AtMention
     ).decode('utf-8')), re.UNICODE)
 
@@ -162,7 +165,7 @@ Protected  = re.compile(
 # While also:   don't => don't
 # the first is considered "edge punctuation".
 # the second is word-internal punctuation -- don't want to mess with it.
-# BTO (2011-06): the edgepunct system seems to be the #1 source of problems these days.  
+# BTO (2011-06): the edgepunct system seems to be the #1 source of problems these days.
 # I remember it causing lots of trouble in the past as well.  Would be good to revisit or eliminate.
 
 # Note the 'smart quotes' (http://en.wikipedia.org/wiki/Smart_quotes)
@@ -186,7 +189,7 @@ def simpleTokenize(text):
     splitPunctText = splitEdgePunct(text)
 
     textLength = len(splitPunctText)
-    
+
     # BTO: the logic here got quite convoluted via the Scala porting detour
     # It would be good to switch back to a nice simple procedural style like in the Python version
     # ... Scala is such a pain.  Never again.
@@ -202,9 +205,9 @@ def simpleTokenize(text):
             badSpans.append( (match.start(), match.end()) )
 
     # Create a list of indices to create the "goods", which can be
-    # split. We are taking "bad" spans like 
-    #     List((2,5), (8,10)) 
-    # to create 
+    # split. We are taking "bad" spans like
+    #     List((2,5), (8,10))
+    # to create
     #     List(0, 2, 5, 8, 10, 12)
     # where, e.g., "12" here would be the textLength
     # has an even length and no indices are the same
@@ -235,7 +238,7 @@ def simpleTokenize(text):
     #for tok in zippedStr:
     #    splitStr.extend(splitToken(tok))
     #zippedStr = splitStr
-    
+
     return zippedStr
 
 def addAllnonempty(master, smaller):
@@ -269,11 +272,10 @@ def normalizeTextForTagger(text):
     return text
 
 # This is intended for raw tweet text -- we do some HTML entity unescaping before running the tagger.
-# 
+#
 # This function normalizes the input text BEFORE calling the tokenizer.
 # So the tokens you get back may not exactly correspond to
 # substrings of the original text.
 def tokenizeRawTweetText(text):
     tokens = tokenize(normalizeTextForTagger(text))
     return tokens
-

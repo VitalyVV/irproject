@@ -17,7 +17,7 @@ def readWikiVocab(fn="vocab.txt"):
         cnt[word] += int(freq)
     return cnt
 
-    
+
 def pythonTokenizeText(fn, output_fn):
     f = open(fn, "r")
     lines = f.readlines()
@@ -40,25 +40,25 @@ def twitterTokenizeText(fn, output_fn):
     tok_lines = []
     for line in lines:
         line = line.strip().lower().decode('utf8')
-        line = line.replace("`"," ")
+        line = line.replace('`', ' ')
         tok_seq = tokenize(line)
-        tok_line = " ".join(tok_seq)
-	#print "tok_line", tok_line
-	#break
+        tok_line = ' '.join(tok_seq)
+        # print "tok_line", tok_line
+        # break
         tok_lines.append(tok_line)
     g = open(output_fn, "w")
     tok_text = "\n".join(tok_lines)
     print(tok_text.encode('utf8'), file=g)
     print("done twitter tokenizing text....")
-        
-    
+
+
 def dumpDict(fn="tok_train.txt"):
     """
     dict: words in lower case
     """
     # word from wikipedia
     cnt = readWikiVocab()
-    
+
     # word from perspective data
     f = open(fn, "r")
     text = f.read()
@@ -71,7 +71,6 @@ def dumpDict(fn="tok_train.txt"):
     with open("dict.pickle", "wb") as handle:
         pickle.dump(cnt, handle)
     print("done dumping the vocabulary...")
-
 
 
 def loadDict(fn="dict.pickle", freq_threshold=6):
@@ -100,22 +99,14 @@ def sanityCheck(cnt_dump="dict.pickle", test_fn="tok_test.txt"):
 
     print("done sanity check...")
 
-if __name__=="__main__":
+
+if __name__ == "__main__":
     # tokenize train and test data
-    #pythonTokenizeText("train.txt", "tok_train.txt")
-    #pythonTokenizeText("test.txt", "tok_test.txt")
+    # pythonTokenizeText("train.txt", "tok_train.txt")
+    # pythonTokenizeText("test.txt", "tok_test.txt")
     twitterTokenizeText("train.txt", "norm_train.txt")
     twitterTokenizeText("test.txt", "norm_test.txt")
-    
 
     # load dictionary
-    #dumpDict("tok_train.txt")
-    #sanityCheck()
-
-
-
-
-
-
-    
-    
+    # dumpDict("tok_train.txt")
+    # sanityCheck()
