@@ -4,6 +4,10 @@ from corpus_util import loadDict, loadDict_std
 import pickle
 
 
+alphabet_list = list(string.ascii_lowercase)
+alphabet_list.append(' ')
+
+
 def readTag(fn):
     TARGET_TAG_SET = ["V", "N", "A"]
     f = open(fn, "r")
@@ -25,7 +29,7 @@ def readTag(fn):
         words = [sent_seq[ind] for ind in inds]
         selected_words.append(words[:])
         tok_sent.append(sent)
-        # if (len(selected_words)>=2):
+        # if (len(selected_words) >= 2):
         #    break
     return selected_inds, selected_words, tok_sent
 
@@ -37,6 +41,78 @@ def load_toxic_word(fn):
     return Sentence_And_Toxic_Word
 
 
+def add_character(word, char=None):
+    """Change a word by adding a random character to it
+
+    :param word: A word to change
+    :param char: A character to add or None to let the function choose randomly
+
+    :return: A changed word
+    """
+    pos = random.randint(0, len(word))
+    word1 = word[0:pos]
+    word2 = word[pos:len(word)]
+    add = char or random.choice(alphabet_list)
+    return word1 + add + word2
+
+
+def delete_character(word):
+    """Change a word by deleting a single character in it
+
+    :param word: A word to change
+
+    :return: A changed word
+    """
+    pos = random.randint(0, len(word) - 1)
+    word1 = word[0:pos]
+    word2 = word[pos + 1:len(word)]
+    return word1 + word2
+
+
+def change_character(word, char=None):
+    """Change a word by replacing a character in it with another one
+
+    :param word: A word to change
+    :param char: A replacement character or None to let the function choose
+        randomly
+
+    :return: A changed word
+    """
+    pos = random.randint(0, len(word) - 1)
+    word1 = word[0:pos]
+    word2 = word[pos + 1:len(word)]
+    change = word[pos]
+    possible_changes = [char for char in alphabet_list if char != change]
+    change = char or random.choice(possible_changes)
+    return word1 + change + word2
+
+
+def permute_characters(word):
+    """Change a word by permuting two adjacent characters in it
+
+    :param word: A word to change
+
+    :return: A changed word
+    """
+    if len(word) <= 1:
+        return word
+    else:
+        pos = random.randint(0, len(word) - 2)
+        word1 = word[0:pos]
+        word2 = word[pos + 2:len(word)]
+        return word1 + word[pos + 1] + word[pos] + word2
+
+
+def separate_characters(word):
+    """Change a word by separating all of its characters with whitespaces
+
+    :param word: A word to change
+
+    :return: A changed word
+    """
+    return ' '.join(word)
+
+
 def change_a_word_dis1(word):
     """A method to change a word that maintains edit distance 1
 
@@ -45,35 +121,13 @@ def change_a_word_dis1(word):
     output:
         modified_word - a word that has edit distance 1 from the input word
     """
-    Alphabet_List = list(string.ascii_lowercase)
-    Alphabet_List.append(' ')
-
-    # 0 - add
-    # 1 - delete
-    # 2 - change
     method = random.randint(0, 2)
-
-    if (method == 0):
-        pos = random.randint(0, len(word))
-        word1 = word[0:pos]
-        word2 = word[pos:len(word)]
-        add = Alphabet_List[random.randint(0, len(Alphabet_List)-1)]
-        return word1+add+word2
-
-    elif (method == 1):
-        pos = random.randint(0, len(word)-1)
-        word1 = word[0:pos]
-        word2 = word[pos+1:len(word)]
-        return word1+word2
-
-    elif (method == 2):
-        pos = random.randint(0, len(word)-1)
-        word1 = word[0:pos]
-        word2 = word[pos+1:len(word)]
-        change = word[pos]
-        while (change == word[pos]):
-            change = Alphabet_List[random.randint(0, len(Alphabet_List)-1)]
-        return word1+change+word2
+    if method == 0:
+        return add_character(word)
+    elif method == 1:
+        return delete_character(word)
+    else:  # method == 2
+        return change_character(word)
 
 
 def change_a_word_5_ways(word):
@@ -93,380 +147,162 @@ def change_a_word_5_ways(word):
         method - the method used to modify. (0 - add, 1 - delete, 2 - replace,
             3 - permute, 4 - separate)
     """
-    Alphabet_List = list(string.ascii_lowercase)
-    Alphabet_List.append(' ')
-
-    # 0 - add
-    # 1 - delete
-    # 2 - replace
-    # 3 - permute
-    # 4 - separate
-    method = random.randint(0, 4)  # if method>4, then no return value
-
-    if (method == 0):
-        pos = random.randint(0, len(word))
-        word1 = word[0:pos]
-        word2 = word[pos:len(word)]
-        add = Alphabet_List[random.randint(0, len(Alphabet_List)-1)]
-        return word1+add+word2, 0
-
-    elif (method == 1):
-        pos = random.randint(0, len(word)-1)
-        word1 = word[0:pos]
-        word2 = word[pos+1:len(word)]
-        return word1+word2, 1
-
-    elif (method == 2):
-        pos = random.randint(0, len(word)-1)
-        word1 = word[0:pos]
-        word2 = word[pos+1:len(word)]
-        change = word[pos]
-        while (change == word[pos]):
-            change = Alphabet_List[random.randint(0, len(Alphabet_List)-1)]
-        return word1+change+word2, 2
-
-    elif (method == 3):
-        if (len(word) <= 1):
-            return word, 3
-        else:
-            pos = random.randint(0, len(word)-2)
-            word1 = word[0:pos]
-            word2 = word[pos+2:len(word)]
-            return word1+word[pos+1]+word[pos]+word2, 3
-
-    elif (method == 4):
-        modified_word = ''
-        for c in list(word):
-            modified_word = modified_word+' '+c
-        modified_word = modified_word[1:len(modified_word)]
-        return modified_word, 4
+    method = random.randint(0, 4)
+    if method == 0:
+        return add_character(word), 0
+    elif method == 1:
+        return delete_character(word), 1
+    elif method == 2:
+        return change_character(word), 2
+    elif method == 3:
+        return permute_characters(word), 3
+    else:  # method == 4
+        return separate_characters(word), 4
 
 
 def change_a_word_5_ways_invalid(word):
-    Alphabet_List = list(string.ascii_lowercase)
-    Alphabet_List.append(' ')
     cnt = loadDict()
 
-    # 0 - add
-    # 1 - delete
-    # 2 - replace
-    # 3 - permute
-    # 4 - separate
-    method = random.randint(0, 4)  # if method>4, then no return value
+    method = random.randint(0, 4)
     ret_word_and_method = ('', -1)
     count = 0
     ret_flag = False
 
-    while (not ret_flag and count < 10):
-
+    while not ret_flag and count < 10:
         count = count + 1
 
-        if (method == 0):
-            pos = random.randint(0, len(word))
-            word1 = word[0:pos]
-            word2 = word[pos:len(word)]
-            add = Alphabet_List[random.randint(0, len(Alphabet_List)-1)]
-            ret_word_and_method = (word1+add+word2, 0)
-
-        elif (method == 1):
-            pos = random.randint(0, len(word)-1)
-            word1 = word[0:pos]
-            word2 = word[pos+1:len(word)]
-            ret_word_and_method = (word1+word2, 1)
-
-        elif (method == 2):
-            pos = random.randint(0, len(word)-1)
-            word1 = word[0:pos]
-            word2 = word[pos+1:len(word)]
-            change = word[pos]
-            while (change == word[pos]):
-                change = Alphabet_List[random.randint(0, len(Alphabet_List)-1)]
-            ret_word_and_method = (word1 + change + word2, 2)
-
-        elif (method == 3):
-            if (len(word) <= 1):
-                ret_word_and_method = (word, 3)
-            else:
-                pos = random.randint(0, len(word)-2)
-                word1 = word[0:pos]
-                word2 = word[pos+2:len(word)]
-                ret_word_and_method = (word1+word[pos+1]+word[pos]+word2, 3)
-
-        elif (method == 4):
-            modified_word = ''
-            for c in list(word):
-                modified_word = modified_word+' '+c
-            modified_word = modified_word[1:len(modified_word)]
-            ret_word_and_method = (modified_word, 4)
+        if method == 0:
+            ret_word_and_method = (add_character(word), 0)
+        elif method == 1:
+            ret_word_and_method = (delete_character(word), 1)
+        elif method == 2:
+            ret_word_and_method = (change_character(word), 2)
+        elif method == 3:
+            ret_word_and_method = (permute_characters(word), 3)
+        else:  # method == 4
+            ret_word_and_method = (separate_characters(word), 4)
 
         if (cnt[ret_word_and_method[0]] == 0):
             ret_flag = True
         else:
+            # Do not use method = 4 more than once
             method = random.randint(0, 3)
 
-    return ret_word_and_method[0], ret_word_and_method[1]
+    return ret_word_and_method
 
 
 def change_a_word_5_ways_invalid_v2(word):
-    Alphabet_List = list(string.ascii_lowercase)
     cnt = loadDict()
 
-    # 0 - add
-    # 1 - delete
-    # 2 - replace
-    # 3 - permute
     method = random.randint(0, 3)
     ret_word_and_method = ('', -1)
     count = 0
     ret_flag = False
 
-    while (not ret_flag and count < 10):
-
+    while not ret_flag and count < 10:
         count = count + 1
 
-        if (method == 0):
-            pos = random.randint(0, len(word))
-            word1 = word[0:pos]
-            word2 = word[pos:len(word)]
-            add = Alphabet_List[random.randint(0, len(Alphabet_List)-1)]
-            ret_word_and_method = (word1+add+word2, 0)
-            if (ret_word_and_method[0] == ''):
-                print(word)
-                print((ret_word_and_method[0]))
-                print(method)
-                print(pos)
-                print(word1)
-                print(word2)
-                print(add)
-
-        elif (method == 1):
-            if (len(word) < 8):
-                while (method == 1):
-                    method = random.randint(0, 4)
+        # TODO: Add logging if ret_word_and_method[0] == ''
+        if method == 0:
+            ret_word_and_method = (add_character(word), 0)
+        elif method == 1:
+            if len(word) < 8:
+                # Do not delete characters unless a word has length 8 or more
+                method = random.choice([0, 2, 3, 4])
                 continue
-            pos = random.randint(0, len(word)-1)
-            word1 = word[0:pos]
-            word2 = word[pos+1:len(word)]
-            ret_word_and_method = (word1+word2, 1)
-            if (ret_word_and_method[0] == ''):
-                print(word)
-                print((ret_word_and_method[0]))
-                print(method)
-                print(pos)
-                print(word1)
-                print(word2)
-
-        elif (method == 2):
-            pos = random.randint(0, len(word)-1)
-            word1 = word[0:pos]
-            word2 = word[pos+1:len(word)]
-            change = word[pos]
-            while (change == word[pos]):
-                change = Alphabet_List[random.randint(0, len(Alphabet_List)-1)]
-            ret_word_and_method = (word1 + change + word2, 2)
-            if (ret_word_and_method[0] == ''):
-                print(word)
-                print((ret_word_and_method[0]))
-                print(method)
-                print(pos)
-                print(word1)
-                print(word2)
-
-        elif (method == 3):
-            if (len(word) <= 1):
-                ret_word_and_method = (word, 3)
-            else:
-                pos = random.randint(0, len(word)-2)
-                word1 = word[0:pos]
-                word2 = word[pos+2:len(word)]
-                ret_word_and_method = (word1+word[pos+1]+word[pos]+word2, 3)
-            if (ret_word_and_method[0] == ''):
-                print(word)
-                print((ret_word_and_method[0]))
-                print(method)
-                print(pos)
-                print(word1)
-                print(word2)
+            ret_word_and_method = (delete_character(word), 1)
+        elif method == 2:
+            ret_word_and_method = (change_character(word), 2)
+        else:  # method == 3
+            ret_word_and_method = (permute_characters(word), 3)
 
         if (cnt[ret_word_and_method[0]] == 0):
             ret_flag = True
         else:
             method = random.randint(0, 3)
 
-    if (not ret_flag and count >= 10 and ret_word_and_method[1] == 0):
-        pos = random.randint(0, len(word))
-        word1 = word[0:pos]
-        word2 = word[pos:len(word)]
-        add = '*'
-        ret_word_and_method = (word1+add+word2, 0)
-    elif (not ret_flag and count >= 10 and ret_word_and_method[1] == 2):
-        pos = random.randint(0, len(word)-1)
-        word1 = word[0:pos]
-        word2 = word[pos+1:len(word)]
-        change = '*'
-        ret_word_and_method = (word1 + change + word2, 2)
+    if not ret_flag and count >= 10:
+        if ret_word_and_method[1] == 0:
+            ret_word_and_method = (add_character(word, char='*'), 0)
+        elif ret_word_and_method[1] == 2:
+            ret_word_and_method = (change_character(word, char='*'), 2)
 
-    if (ret_word_and_method[1] == -1):
-        if (len(word) >= 8):
-            pos = random.randint(0, len(word)-1)
-            word1 = word[0:pos]
-            word2 = word[pos+1:len(word)]
-            ret_word_and_method = (word1+word2, 1)
+    if ret_word_and_method[1] == -1:
+        if len(word) >= 8:
+            ret_word_and_method = (delete_character(word), 1)
         else:
-            pos = random.randint(0, len(word))
-            word1 = word[0:pos]
-            word2 = word[pos:len(word)]
-            add = '*'
-            ret_word_and_method = (word1+add+word2, 0)
+            ret_word_and_method = (add_character(word, char='*'), 0)
 
-    if (ret_word_and_method[0] == ''):
-        print(word)
-        print((ret_word_and_method[0]))
-        print((ret_word_and_method[1]))
-
-    return ret_word_and_method[0], ret_word_and_method[1]
+    # TODO: Log here also
+    return ret_word_and_method
 
 
 def change_a_word_5_ways_invalid_v2_force_method(word, method):
-    Alphabet_List = list(string.ascii_lowercase)
     cnt = loadDict()
 
-    # 0 - add
-    # 1 - delete
-    # 2 - replace
-    # 3 - permute
     ret_word_and_method = ('', -1)
     count = 0
     ret_flag = False
-
-    while (not ret_flag and count < 10):
-
+    while not ret_flag and count < 10:
         count = count + 1
 
-        if (method == 0):
-            pos = random.randint(0, len(word))
-            word1 = word[0:pos]
-            word2 = word[pos:len(word)]
-            add = Alphabet_List[random.randint(0, len(Alphabet_List)-1)]
-            ret_word_and_method = (word1+add+word2, 0)
-            if (ret_word_and_method[0] == ''):
-                print(word)
-                print((ret_word_and_method[0]))
-                print(method)
-                print(pos)
-                print(word1)
-                print(word2)
-                print(add)
-
-        elif (method == 1):
-            if (len(word) < 8):
-                print('Bug: used delete method for len(word)')
-                return 'Bug: used delete method for len(word)', 1
-            pos = random.randint(0, len(word)-1)
-            word1 = word[0:pos]
-            word2 = word[pos+1:len(word)]
-            ret_word_and_method = (word1+word2, 1)
-            if (ret_word_and_method[0] == ''):
-                print(word)
-                print((ret_word_and_method[0]))
-                print(method)
-                print(pos)
-                print(word1)
-                print(word2)
-
-        elif (method == 2):
-            pos = random.randint(0, len(word)-1)
-            word1 = word[0:pos]
-            word2 = word[pos+1:len(word)]
-            change = word[pos]
-            while (change == word[pos]):
-                change = Alphabet_List[random.randint(0, len(Alphabet_List)-1)]
-            ret_word_and_method = (word1+change+word2, 2)
-            if (ret_word_and_method[0] == ''):
-                print(word)
-                print((ret_word_and_method[0]))
-                print(method)
-                print(pos)
-                print(word1)
-                print(word2)
-
-        elif (method == 3):
-            if (len(word) <= 1):
-                ret_word_and_method = (word, 3)
-            else:
-                pos = random.randint(0, len(word)-2)
-                word1 = word[0:pos]
-                word2 = word[pos+2:len(word)]
-                ret_word_and_method = (word1+word[pos+1]+word[pos]+word2, 3)
-            if (ret_word_and_method[0] == ''):
-                print(word)
-                print((ret_word_and_method[0]))
-                print(method)
-                print(pos)
-                print(word1)
-                print(word2)
+        # TODO: Add logging if ret_word_and_method[0] == ''
+        if method == 0:
+            ret_word_and_method = (add_character(word), 0)
+        elif method == 1:
+            if len(word) < 8:
+                raise ValueError(
+                    f'The word {word} is too short ({len(word)})'
+                    ' to use delete method')
+            ret_word_and_method = (delete_character(word), 1)
+        elif method == 2:
+            ret_word_and_method = (change_character(word), 2)
+        else:  # method == 3
+            ret_word_and_method = (permute_characters(word), 3)
 
         if (cnt[ret_word_and_method[0]] == 0):
             ret_flag = True
 
-    if (not ret_flag and count >= 10 and ret_word_and_method[1] == 0):
-        pos = random.randint(0, len(word))
-        word1 = word[0:pos]
-        word2 = word[pos:len(word)]
-        add = '*'
-        ret_word_and_method = (word1+add+word2, 0)
-    elif (not ret_flag and count >= 10 and ret_word_and_method[1] == 2):
-        pos = random.randint(0, len(word)-1)
-        word1 = word[0:pos]
-        word2 = word[pos+1:len(word)]
-        change = '*'
-        ret_word_and_method = (word1 + change + word2, 2)
+    if not ret_flag and count >= 10:
+        if ret_word_and_method[1] == 0:
+            ret_word_and_method = (add_character(word, char='*'), 0)
+        elif ret_word_and_method[1] == 2:
+            ret_word_and_method = (change_character(word, char='*'), 2)
 
-    if (ret_word_and_method[1] == -1):
-        if (len(word) >= 8):
-            pos = random.randint(0, len(word)-1)
-            word1 = word[0:pos]
-            word2 = word[pos+1:len(word)]
-            ret_word_and_method = (word1+word2, 1)
+    if ret_word_and_method[1] == -1:
+        if len(word) >= 8:
+            ret_word_and_method = (delete_character(word), 1)
         else:
-            pos = random.randint(0, len(word))
-            word1 = word[0:pos]
-            word2 = word[pos:len(word)]
-            add = '*'
-            ret_word_and_method = (word1+add+word2, 0)
+            ret_word_and_method = (add_character(word, char='*'), 0)
 
-    if (ret_word_and_method[0] == ''):
-        print(word)
-        print((ret_word_and_method[0]))
-        print((ret_word_and_method[1]))
-
-    return ret_word_and_method[0], ret_word_and_method[1]
+    # TODO: Log here also
+    return ret_word_and_method
 
 
-def modify_one_word_dis1(sentence, Words_List):
+def modify_one_word_dis1(sentence, words_list):
     s_wo_punctuation = sentence
     for p in list(string.punctuation):
         s_wo_punctuation = s_wo_punctuation.replace(p, '')
-    Words_In_Sentence = s_wo_punctuation.split()
-    # print(Words_In_Sentence)
-    Modified_Sentences = []
-    # print(Words_List)
-    for word in Words_List:
+    words_in_sentence = s_wo_punctuation.split()
+    # print(words_in_sentence)
+    modified_sentences = list()
+    # print(words_list)
+    for word in words_list:
         # Note that Python by default passes by reference
-        New_Words_In_Sentence = Words_In_Sentence[:]
-        # print(New_Words_In_Sentence)
-        Indices = [i for i, x in enumerate(Words_In_Sentence) if x == word]
-        # print(Indices)
-        for i in Indices:
-            # print(New_Words_In_Sentence[i])
-            New_Words_In_Sentence[i] = change_a_word_dis1(
-                New_Words_In_Sentence[i])
-            # print(New_Words_In_Sentence[i])
+        new_words_in_sentence = words_in_sentence[:]
+        # print(new_words_in_sentence)
+        indices = [i for i, x in enumerate(words_in_sentence) if x == word]
+        # print(indices)
+        for i in indices:
+            # print(new_words_in_sentence[i])
+            new_words_in_sentence[i] = change_a_word_dis1(
+                new_words_in_sentence[i])
+            # print(new_words_in_sentence[i])
         new_sentence = ''
-        for w in New_Words_In_Sentence:
+        for w in new_words_in_sentence:
             new_sentence = new_sentence + w + ' '
-        Modified_Sentences.append(new_sentence)
-    return Modified_Sentences
+        modified_sentences.append(new_sentence)
+    return modified_sentences
 
 
 def modify_one_word_5_ways(sentence, Words_List):
