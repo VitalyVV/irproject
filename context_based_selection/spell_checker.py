@@ -4,16 +4,13 @@ spell checker
 import argparse
 import codecs
 import os
-import difflib
-from nltk.corpus import words
 import numpy as np
-import editdistance
-
+from jellyfish import levenshtein_distance as dist
 from context_score import cosSim
 from vocab import Vocab
-from domain_corpus_generation.corpus_util import loadDict
-from preprocess.regular_check import rawCheck, rawCheckOnDist
-from pyxdameraulevenshtein import damerau_levenshtein_distance as dist
+from corpus_util import loadDict
+from regular_check import rawCheckOnDist
+
 
 
 corpus = loadDict()
@@ -22,7 +19,7 @@ train_corpus = corpus
 
 
 vecDim = 300
-embedding_directory = "SpellingCorrection/domain_corpus_generation/embeddings/"
+embedding_directory = "./"
 vocabInputFile = "vocab.txt"
 vectorInputFile = "vectors.bin"
 isFunctional = 1
@@ -190,115 +187,70 @@ def generateAlgoCandCorrection(sent_str_list, context_size=4):
     revised_sent_token = []
     revised_corrections = []
     cand_corrections = []
-    # stage 1: context-free check
-    sent_token_list, corrections = rawCheckOnDist(sent_str_list, corpus, small_corpus) # rawCheck(sent_str_list)
 
-    # stage 2: context-dependent check
-    corrections2 = []
-    sent_num = len(sent_token_list)
-    for sent_ind in range(sent_num):
-        sent_seq = sent_token_list[sent_ind]
-        revised_sent_seq, corr, cand_corr = outputCorrectionSent(sent_seq, context_size)
-        revised_sent_token.append(revised_sent_seq[:])
-        revised_corrections.append(corrections[sent_ind][:]+corr[:])
-        cand_corrections.append(cand_corr[:])
+    sent_token_list = rawCheckOnDist(sent_str_list) # rawCheck(sent_str_list)
 
-    return revised_sent_token, revised_corrections, cand_corrections
+    return sent_token_list, revised_corrections, cand_corrections
     
 
 
-def readInputSent(error_type):
+def readInputSent(path):
     """
     read file with added errors: origin sent, score, error sent, score, corrected word
     return a list of strings
     """
-    path = ""
+
     orig_sent_list = []
     error_sent_list = []
     correction_list = []
-    for fn in os.listdir(path):
-        if (not fn.endswith(".txt")):
-            continue
-        f = open(path+fn, "r")
-        lines = f.readlines()
-        while (len(lines) >= 6):
-            # original sent
-            orig_sent = lines.pop(0)
-            orig_sent_list.append(orig_sent)
-            # original score
-            orig_score = float(lines.pop(0))
-
-            # revised sent
-            error_sent = lines.pop(0)
-            error_sent_list.append(error_sent)
-            # revised score
-            revised_score = float(lines.pop(0))
-
-            # corrections
-            correction_str = lines.pop(0).strip()
-            seq = correction_str.split(";")
-            seq = [s.strip() for s in seq]
-
-            corrections = [(s.split(",")[0].strip(), s.split(",")[1].strip()) for s in seq if s!=""]
-            correction_list.append(corrections[:])
-
-            lines.pop(0)
-        f.close()
+    fn = 'vocab_inv.txt'
+    on = 'vocab.txt'
+    f = open(fn, 'r')
+    o = open(on, 'r')
+    err_lines = f.readlines()
+    lines = o.readlines()
+    for i in range(len(lines)):
+        # original sent
+        orig_line = lines[i].split()[0]
+        orig_sent_list.append(orig_line)
+        # revised sent
+        err_line = err_lines[i]
+        error_sent_list.append(err_line)
+    f.close()
+    o.close()
 
     return orig_sent_list, error_sent_list, correction_list
 
 
 def evalCorrections(gold_corrections, algo_corrections, cand_corrections, error_type):
-    # accuracy: correct_algo_corrections/gold_corrections
-    # precision: correct_algo_corrections/total_algo_corrections
-    # recall: correction
-    total_gold_corrections = 0
-    total_algo_corrections = 0
-    correct_algo_corrections = 0
 
+    correct_algo_corrections = 0
     for ind in range(len(gold_corrections)):
         gold_list = gold_corrections[ind]
         algo_list = algo_corrections[ind]
-        total_gold_corrections += len(gold_list)
-        total_algo_corrections += len(algo_list)
-        for tup in gold_list:
-            if (tup in algo_list):
-                correct_algo_corrections += 1
+        if gold_list == algo_list:
+            correct_algo_corrections += 1
 #	    else:
-#		print >> logs, str(tup)+"\t"+str(cand_corrections[ind])
+#		print(logs, str(tup)+"\t"+str(cand_corrections[ind])
 #    logs.close()
-    prec = 1.0 * correct_algo_corrections / total_algo_corrections
-    recall = 1.0 * correct_algo_corrections / total_gold_corrections
+    prec = 1.0 * correct_algo_corrections / len(algo_corrections)
+    recall = 1.0 * correct_algo_corrections / len(gold_corrections)
     fscore = 2 * prec * recall / (prec + recall)
     print("prec %f , recall %f , fscore %f" % (prec, recall, fscore))
-    print("total_gold_corrections: %f , correct_algo_corrections: %f" % (total_gold_corrections, correct_algo_corrections))
+    print("total_gold_corrections: %f , correct_algo_corrections: %f" % (len(gold_corrections), len(algo_corrections)))
 
 
 
 if __name__=="__main__":
-    error_type_list = ["add", "delete", "permute", "replace", "separate"]
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--errorType', default="add", type=str)
-    args = parser.parse_args()
-    error_type = args.errorType
+    error_type = ''
 
     # read raw data & gold corrections
-    #orig_sent_list, error_sent_list, correct_word_list = readInputSent(error_type)
-    orig_sent_list, error_sent_list, gold_corrections = readInputSent(error_type)
-    # generate gold corrections
-    # gold_corrections = generateTrueCandCorrection(orig_sent_list, error_sent_list, correct_word_list)
-    
+    orig_sent_list, error_sent_list, gold_corrections = readInputSent('')
     # generate algo corrections
     revised_sent_seq, algo_corrections, cand_corrections = generateAlgoCandCorrection(error_sent_list)
 
-    # output algo sentences
-    f = open("corrected_sent_"+str(error_type)+".txt", "w")
-    for sent_seq in revised_sent_seq:
-        print(" ".join(sent_seq), file=f)
-        f.close()
-
     # evaluate
-    evalCorrections(gold_corrections, algo_corrections, cand_corrections, error_type)
+    evalCorrections(orig_sent_list, revised_sent_seq, cand_corrections, error_type)
 
     
 
